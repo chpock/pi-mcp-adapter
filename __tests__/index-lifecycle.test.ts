@@ -2365,6 +2365,25 @@ describe("mcpAdapter session lifecycle", () => {
     expect(mocks.executeGuardedDescribe).toHaveBeenCalledWith(state, "codegraph_explore", "codegraph");
   });
 
+  it("rejects a pending describe result after the session is replaced", async () => {
+    const state = createState();
+    const describeResult = { content: [{ type: "text", text: "stale description" }], details: { mode: "describe" } };
+    const pendingDescribe = createDeferred<typeof describeResult>();
+    mocks.initializeMcp.mockResolvedValue(state);
+    mocks.executeGuardedDescribe.mockReturnValue(pendingDescribe.promise);
+    const { api, handlers } = await loadAdapter();
+    await handlers.get("session_start")?.({}, {});
+    await Promise.resolve();
+    await Promise.resolve();
+    const execution = registeredTool(api, "mcp").execute("describe-pending", { describe: "demo_search" });
+    await vi.waitFor(() => expect(mocks.executeGuardedDescribe).toHaveBeenCalledOnce());
+
+    await handlers.get("session_start")?.({}, {});
+    pendingDescribe.resolve(describeResult);
+
+    await expect(execution).rejects.toThrow("MCP extension session restarted");
+  });
+
   it("forwards native object proxy args into executeCall", async () => {
     const state = createState();
     mocks.initializeMcp.mockResolvedValue(state);
