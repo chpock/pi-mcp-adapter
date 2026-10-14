@@ -49,7 +49,7 @@ const mocks = vi.hoisted(() => ({
   executeAuthStart: vi.fn(),
   executeCall: vi.fn(),
   executeConnect: vi.fn(),
-  executeDescribe: vi.fn(),
+  executeGuardedDescribe: vi.fn(),
   executeList: vi.fn(),
   executeSearch: vi.fn(),
   executeStatus: vi.fn(),
@@ -158,7 +158,7 @@ vi.mock("../proxy-modes.ts", async () => {
   executeAuthStart: mocks.executeAuthStart,
   executeCall: mocks.executeCall,
   executeConnect: mocks.executeConnect,
-  executeDescribe: mocks.executeDescribe,
+  executeGuardedDescribe: mocks.executeGuardedDescribe,
   executeList: mocks.executeList,
   executeSearch: mocks.executeSearch,
   executeStatus: mocks.executeStatus,
@@ -2349,7 +2349,7 @@ describe("mcpAdapter session lifecycle", () => {
       details: { mode: "describe", server: "codegraph" },
     };
     mocks.initializeMcp.mockResolvedValue(state);
-    mocks.executeDescribe.mockReturnValue(describeResult);
+    mocks.executeGuardedDescribe.mockReturnValue(describeResult);
 
     const { api, handlers } = await loadAdapter();
     await handlers.get("session_start")?.({}, {});
@@ -2362,7 +2362,7 @@ describe("mcpAdapter session lifecycle", () => {
       server: "codegraph",
     })).toBe(describeResult);
 
-    expect(mocks.executeDescribe).toHaveBeenCalledWith(state, "codegraph_explore", "codegraph");
+    expect(mocks.executeGuardedDescribe).toHaveBeenCalledWith(state, "codegraph_explore", "codegraph");
   });
 
   it("forwards native object proxy args into executeCall", async () => {
